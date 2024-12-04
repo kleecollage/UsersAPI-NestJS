@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import configuration from 'src/configuration/configuration';
+import { PermissionsModule } from 'src/modules/permissions/permissions.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import configuration from 'src/configuration/configuration';
         uri: `mongodb+srv://${configService.get('mongo.user')}:${configService.get('mongo.password')}@${configService.get('mongo.host')}/${configService.get('mongo.database')}?retryWrites=true&w=majority&appName=NestJsApp`,
       }),
     }),
+    PermissionsModule,
   ],
   controllers: [],
   providers: [],
