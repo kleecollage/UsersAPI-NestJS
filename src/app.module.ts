@@ -22,5 +22,3 @@ import configuration from 'src/configuration/configuration';
   providers: [],
 })
 export class AppModule {}
-
-// 'mongodb+srv://nestjs_user:admin@cluster0.zeg8wsi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
