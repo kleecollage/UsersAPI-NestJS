@@ -11,7 +11,10 @@ export class RolesService {
     @InjectModel(Role.name) private roleModel: Model<Role>,
     private permissionService: PermissionsService,
   ) {}
-
+  //** ---------------------------------------- FIND ROLE BY NAME ---------------------------------------- **//
+  findRoleByName(name: string) {
+    return this.roleModel.findOne({ name });
+  }
   //** ---------------------------------------- CREATE ROLE ---------------------------------------- **//
   async createRole(role: RoleDto) {
     const roleExists = await this.roleModel.findOne({ name: role.name });
@@ -40,8 +43,7 @@ export class RolesService {
 
     return r.save();
   }
-
-  //** ---------------------------------------- CREATE ROLE ---------------------------------------- **//
+  //** ---------------------------------------- GET ROLES WITH QUERIES ---------------------------------------- **//
   getRoles(name: string) {
     const filter = {};
 
@@ -53,5 +55,40 @@ export class RolesService {
     }
 
     return this.roleModel.find(filter).populate('permissions'); // populate return the entire object
+  }
+  //** ---------------------------------------- UPDATE ROLE ---------------------------------------- **//
+  async updateRole(name: string, role: RoleDto) {
+    const roleExists = await this.findRoleByName(name);
+    if (roleExists) {
+      const newRoleExists = await this.findRoleByName(role.name);
+      if (newRoleExists && newRoleExists.name != name)
+        throw new ConflictException(
+          `Role ${newRoleExists.name} already exists`,
+        );
+
+      const permissionsRole: Types.ObjectId[] = [];
+      if (role.permissions && role.permissions.length > 0) {
+        for (const permission of role.permissions) {
+          const permissionsFound =
+            await this.permissionService.findPermissionByName(permission.name);
+
+          if (!permissionsFound) {
+            throw new ConflictException(
+              `Permission ${permission.name} not exists`,
+            );
+          }
+          permissionsRole.push(permissionsFound._id);
+        }
+
+        await roleExists.updateOne({
+          name: role.name,
+          permissions: permissionsRole,
+        });
+
+        return this.findRoleByName(role.name);
+      } else {
+        return this.createRole(role);
+      }
+    }
   }
 }
