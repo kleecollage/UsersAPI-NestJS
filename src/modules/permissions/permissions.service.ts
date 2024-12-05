@@ -11,11 +11,14 @@ export class PermissionsService {
     @InjectModel(Permission.name) private permissionModel: Model<Permission>,
   ) {}
 
+  //** ---------------------------------------- FIND PERMISSION BY NAME ---------------------------------------- **//
+  findPermissionByName(name: string) {
+    return this.permissionModel.findOne({ name });
+  }
+
   //** ---------------------------------------- CREATE PERMISSIONS ---------------------------------------- **//
   async createPermission(permission: PermissionDto) {
-    const permissionExists = await this.permissionModel.findOne({
-      name: permission.name,
-    });
+    const permissionExists = await this.findPermissionByName(permission.name);
 
     if (permissionExists)
       throw new ConflictException('Permission already exists');
@@ -39,13 +42,13 @@ export class PermissionsService {
 
   //** ---------------------------------------- UPDATE PERMISSIONS ---------------------------------------- **//
   async updatePermission(updatePermission: UpdatePermissionDto) {
-    const permissionExists = await this.permissionModel.findOne({
-      name: updatePermission.originalName,
-    });
+    const permissionExists = await this.findPermissionByName(
+      updatePermission.originalName,
+    );
 
-    const newPermissionExists = await this.permissionModel.findOne({
-      name: updatePermission.newName,
-    });
+    const newPermissionExists = await this.findPermissionByName(
+      updatePermission.newName,
+    );
 
     if (permissionExists && !newPermissionExists) {
       await permissionExists.updateOne({
@@ -65,7 +68,7 @@ export class PermissionsService {
 
   //** ---------------------------------------- DELETE PERMISSION ---------------------------------------- **//
   async deletePermission(name: string) {
-    const permissionExists = await this.permissionModel.findOne({ name });
+    const permissionExists = await this.findPermissionByName(name);
 
     if (permissionExists) {
       return permissionExists.deleteOne();
