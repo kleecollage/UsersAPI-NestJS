@@ -42,7 +42,16 @@ export class RolesService {
   }
 
   //** ---------------------------------------- CREATE ROLE ---------------------------------------- **//
-  getRoles() {
-    return this.roleModel.find();
+  getRoles(name: string) {
+    const filter = {};
+
+    if (name) {
+      filter['name'] = {
+        $regex: name.trim(),
+        $options: 'i', // i = ignore
+      };
+    }
+
+    return this.roleModel.find(filter).populate('permissions'); // populate return the entire object
   }
 }
