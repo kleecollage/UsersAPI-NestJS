@@ -32,7 +32,7 @@ export class UserDto {
   email!: string;
 
   @ApiProperty({
-    name: 'birthDate',
+    name: 'birthdate',
     type: Date,
     required: true,
     description: 'User birthdate',
@@ -40,7 +40,7 @@ export class UserDto {
   @IsDate()
   @IsNotEmpty()
   @Type(() => Date)
-  birthDate!: Date;
+  birthdate!: Date;
 
   @ApiProperty({
     name: 'role',
