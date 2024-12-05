@@ -18,5 +18,6 @@ import { PermissionsService } from './permissions.service';
   ],
   controllers: [PermissionsController],
   providers: [PermissionsService],
+  exports: [PermissionsService],
 })
 export class PermissionsModule {}
