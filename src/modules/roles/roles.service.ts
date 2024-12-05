@@ -119,4 +119,39 @@ export class RolesService {
       } else throw new ConflictException('Permission not exists');
     } else throw new ConflictException('Role not exists');
   }
+  //** ---------------------------------------- REMOVE PERMISSIONS ---------------------------------------- **//
+  async removePermission(name: string, permission: PermissionDto) {
+    const roleExists = await this.findRoleByName(name);
+
+    if (roleExists) {
+      const permissionExists =
+        await this.permissionService.findPermissionByName(permission.name);
+
+      if (permissionExists) {
+        const permissionRoleExists = await this.roleModel.findOne({
+          name: roleExists.name,
+          permissions: {
+            $in: permissionExists._id,
+          },
+        });
+
+        if (permissionRoleExists) {
+          await roleExists.updateOne({
+            $pull: {
+              permissions: permissionExists._id,
+            },
+          });
+
+          return this.findRoleByName(name);
+        } else
+          throw new ConflictException('Permission not exists on this role');
+      } else throw new ConflictException('Permission not accepted');
+    } else throw new ConflictException('Role not exists');
+  }
+  //** ---------------------------------------- DELETE ROLE ---------------------------------------- **//
+  async deleteRole(name: string) {
+    const roleExists = await this.findRoleByName(name);
+    if (roleExists) return roleExists.deleteOne();
+    else throw new ConflictException('Role not exists');
+  }
 }
