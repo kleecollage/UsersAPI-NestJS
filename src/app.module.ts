@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import configuration from 'src/configuration/configuration';
 import { PermissionsModule } from 'src/modules/permissions/permissions.module';
 import { RolesModule } from 'src/modules/roles/roles.module';
+import { UsersModule } from 'src/modules/users/users.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RolesModule } from 'src/modules/roles/roles.module';
     }),
     PermissionsModule,
     RolesModule,
+    UsersModule,
   ],
   controllers: [],
   providers: [],
