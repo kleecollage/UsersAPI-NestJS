@@ -10,5 +10,5 @@ export class RoleDto {
   @IsArray()
   @IsOptional()
   @Type(() => PermissionDto)
-  permission?: PermissionDto[] = [];
+  permissions?: PermissionDto[] = [];
 }
