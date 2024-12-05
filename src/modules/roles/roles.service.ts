@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { PermissionDto } from 'src/modules/permissions/dto/permission-dto';
 import { PermissionsService } from 'src/modules/permissions/permissions.service';
 import { RoleDto } from 'src/modules/roles/dto/role-dto';
 import { Role } from 'src/modules/roles/schemas/role.schema';
@@ -86,9 +87,36 @@ export class RolesService {
         });
 
         return this.findRoleByName(role.name);
-      } else {
-        return this.createRole(role);
-      }
+      } else return this.createRole(role);
     }
+  }
+  //** ---------------------------------------- ADD PERMISSIONS ---------------------------------------- **//
+  async addPermission(name: string, permission: PermissionDto) {
+    const roleExists = await this.findRoleByName(name);
+
+    if (roleExists) {
+      const permissionExists =
+        await this.permissionService.findPermissionByName(permission.name);
+
+      if (permissionExists) {
+        const permissionRoleExists = await this.roleModel.findOne({
+          name: roleExists.name,
+          permissions: {
+            $in: permissionExists._id,
+          },
+        });
+
+        if (!permissionRoleExists) {
+          await roleExists.updateOne({
+            $push: {
+              permissions: permissionExists._id,
+            },
+          });
+
+          return this.findRoleByName(name);
+        } else
+          throw new ConflictException('Permission already exists on this role');
+      } else throw new ConflictException('Permission not exists');
+    } else throw new ConflictException('Role not exists');
   }
 }

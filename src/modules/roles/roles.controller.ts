@@ -1,5 +1,15 @@
-import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { PermissionDto } from 'src/modules/permissions/dto/permission-dto';
 import { RoleDto } from 'src/modules/roles/dto/role-dto';
 import { RolesService } from 'src/modules/roles/roles.service';
 
@@ -21,5 +31,13 @@ export class RolesController {
   @Put('/:name')
   updateRole(@Param('name') name: string, @Body() role: RoleDto) {
     return this.rolesService.updateRole(name, role);
+  }
+
+  @Patch('/add-permission/:name')
+  addPermission(
+    @Param('name') name: string,
+    @Body() permission: PermissionDto,
+  ) {
+    return this.rolesService.addPermission(name, permission);
   }
 }
