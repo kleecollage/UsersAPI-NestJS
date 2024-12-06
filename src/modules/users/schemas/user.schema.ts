@@ -4,7 +4,7 @@ import { Types } from 'mongoose';
 @Schema()
 export class User {
   @Prop({ unique: true })
-  userCode: number;
+  usercode: number;
 
   @Prop({ required: true })
   name: string;
