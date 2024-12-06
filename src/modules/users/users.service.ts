@@ -1,6 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { RolesService } from 'src/modules/roles/roles.service';
 import { UserDto } from 'src/modules/users/dto/user-dto';
 import { User } from 'src/modules/users/schemas/user.schema';
@@ -41,17 +41,19 @@ export class UsersService {
       );
     }
 
+    let roleId: Types.ObjectId = null;
     if (user.role) {
       const roleExists = await this.roleService.findRoleByName(user.role.name);
       if (!roleExists)
         throw new ConflictException(`Role: ${user.role.name} not allowed`);
-      else user.role = roleExists;
+      else roleId = roleExists._id;
     }
 
     const nUsers = await this.userModel.countDocuments();
     const u = new this.userModel({
-      userCode: nUsers + 1,
       ...user,
+      usercode: nUsers + 1,
+      role: roleId,
     });
 
     await u.save();
@@ -106,5 +108,34 @@ export class UsersService {
       nextPage,
       pevPage,
     };
+  }
+  //** ---------------------------------------- UPDATE USER ---------------------------------------- **//
+  async updateUser(usercode: number, user: UserDto) {
+    const userExists = await this.findUserByUsercode(usercode);
+
+    if (userExists) {
+      if (userExists.email != user.email) {
+        const emailExists = await this.findUserByEmail(user.email);
+        if (emailExists)
+          throw new ConflictException(`Email: ${user.email}. Already exists`);
+      }
+
+      let roleId: Types.ObjectId = null;
+      if (user.role) {
+        const roleExists = await this.roleService.findRoleByName(
+          user.role.name,
+        );
+        if (!roleExists)
+          throw new ConflictException(`Role: ${user.role.name} not allowed`);
+        else roleId = roleExists._id;
+      }
+
+      await userExists.updateOne({
+        ...user,
+        role: roleId,
+      });
+
+      return this.findUserByUsercode(usercode);
+    } else return this.createUser(user);
   }
 }

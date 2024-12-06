@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { UserDto } from 'src/modules/users/dto/user-dto';
 import { UsersService } from 'src/modules/users/users.service';
@@ -22,5 +22,10 @@ export class UsersController {
     @Query('sort') sort: string,
   ) {
     return this.userService.getUsers(page, size, sortBy, sort);
+  }
+
+  @Put('/:usercode')
+  updateUser(@Param('usercode') usercode: number, @Body() user: UserDto) {
+    return this.userService.updateUser(usercode, user);
   }
 }
