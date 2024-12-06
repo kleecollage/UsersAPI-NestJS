@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { RolesService } from 'src/modules/roles/roles.service';
 import { UserDto } from 'src/modules/users/dto/user-dto';
+import { UserRoleDto } from 'src/modules/users/dto/user-role-dto';
 import { User } from 'src/modules/users/schemas/user.schema';
 
 @Injectable()
@@ -60,7 +61,7 @@ export class UsersService {
 
     return this.findUserByEmail(user.email);
   }
-  //** ---------------------------------------- GET USERS ---------------------------------------- **//
+  //** ---------------------------------------- GET DELETED USERS ---------------------------------------- **//
   async getUsers(page: number, size: number, sortBy: string, sort: string) {
     const skip = (page - 1) * size;
     const total = await this.userModel.countDocuments();
@@ -86,6 +87,114 @@ export class UsersService {
 
     const users: User[] = await this.userModel
       .find()
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(size)
+      .populate({
+        path: 'role',
+        populate: {
+          path: 'permissions',
+          model: 'Permission',
+        },
+      });
+
+    return {
+      content: users,
+      page,
+      size,
+      total,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      nextPage,
+      pevPage,
+    };
+  }
+  //** ---------------------------------------- GET ACTIVE USERS ---------------------------------------- **//
+  async getUsersActive(
+    page: number,
+    size: number,
+    sortBy: string,
+    sort: string,
+  ) {
+    const total = await this.userModel.countDocuments({ deleted: false });
+    const totalPages = Math.ceil(total / size);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1 && page <= totalPages;
+    const nextPage = hasNextPage ? page + 1 : null;
+    const pevPage = hasPrevPage ? page - 1 : null;
+    const skip = (page - 1) * size;
+    const sortOptions = {};
+
+    if (sortBy && sort) {
+      switch (sort.toUpperCase()) {
+        case 'ASC':
+          sortOptions[sortBy] = 1;
+          break;
+        case 'DESC':
+          sortOptions[sortBy] = -1;
+          break;
+      }
+    } else if (sortBy) {
+      sortOptions[sortBy] = 1;
+    }
+
+    const users: User[] = await this.userModel
+      .find({ deleted: false })
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(size)
+      .populate({
+        path: 'role',
+        populate: {
+          path: 'permissions',
+          model: 'Permission',
+        },
+      });
+
+    return {
+      content: users,
+      page,
+      size,
+      total,
+      totalPages,
+      hasNextPage,
+      hasPrevPage,
+      nextPage,
+      pevPage,
+    };
+  }
+  //** ---------------------------------------- GET DELETED USERS ---------------------------------------- **//
+  async getUsersDeleted(
+    page: number,
+    size: number,
+    sortBy: string,
+    sort: string,
+  ) {
+    const total = await this.userModel.countDocuments({ deleted: true });
+    const totalPages = Math.ceil(total / size);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1 && page <= totalPages;
+    const nextPage = hasNextPage ? page + 1 : null;
+    const pevPage = hasPrevPage ? page - 1 : null;
+    const skip = (page - 1) * size;
+    const sortOptions = {};
+
+    if (sortBy && sort) {
+      switch (sort.toUpperCase()) {
+        case 'ASC':
+          sortOptions[sortBy] = 1;
+          break;
+        case 'DESC':
+          sortOptions[sortBy] = -1;
+          break;
+      }
+    } else if (sortBy) {
+      sortOptions[sortBy] = 1;
+    }
+
+    const users: User[] = await this.userModel
+      .find({ deleted: true })
       .sort(sortOptions)
       .skip(skip)
       .limit(size)
@@ -137,5 +246,66 @@ export class UsersService {
 
       return this.findUserByUsercode(usercode);
     } else return this.createUser(user);
+  }
+  //** ---------------------------------------- ADD ROLE ---------------------------------------- **//
+  async addRole(userRole: UserRoleDto) {
+    const userExists = await this.findUserByUsercode(userRole.usercode);
+    if (userExists) {
+      if (userExists.role) {
+        throw new ConflictException(
+          `User with usercode: ${userRole.usercode} already have a role`,
+        );
+      } else {
+        const roleExist = await this.roleService.findRoleByName(
+          userRole.roleName,
+        );
+
+        if (roleExist) {
+          await userExists.updateOne({ role: roleExist._id });
+
+          return this.findUserByUsercode(userRole.usercode);
+        } else {
+          throw new ConflictException(
+            `Role ${userRole.roleName} is not aviable`,
+          );
+        }
+      }
+    } else {
+      throw new ConflictException(
+        `User with usercode ${userRole.usercode} not exists`,
+      );
+    }
+  }
+  //** ---------------------------------------- REMOVE ROLE ---------------------------------------- **//
+  async removeRole(usercode: number) {
+    const userExists = await this.findUserByUsercode(usercode);
+    if (userExists) {
+      if (userExists.role) {
+        await userExists.updateOne({ role: null });
+
+        return this.findUserByUsercode(usercode);
+      } else {
+        throw new ConflictException(
+          `User with usercode: ${usercode}. Has no role assigned`,
+        );
+      }
+    } else
+      throw new ConflictException(`User with usercode ${usercode} not exists`);
+  }
+  //** ---------------------------------------- REMOVE USER ---------------------------------------- **//
+  async deleteUser(usercode: number) {
+    const userExists = await this.findUserByUsercode(usercode);
+    if (userExists) {
+      if (userExists.deleted) {
+        throw new ConflictException(
+          `User with usercode ${usercode} is already deleted`,
+        );
+      } else {
+        await userExists.updateOne({ deleted: true });
+
+        return this.findUserByUsercode(usercode);
+      }
+    } else
+      throw new ConflictException(`User with usercode ${usercode} not exists`);
   }
 }
