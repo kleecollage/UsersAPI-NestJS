@@ -70,6 +70,11 @@ export class UsersController {
     return this.userService.removeRole(usercode);
   }
 
+  @Patch('/restore/:usercode')
+  restoreUser(@Param('usercode') usercode: number) {
+    return this.userService.restoreUser(usercode);
+  }
+
   @Delete('/:usercode')
   deleteUser(@Param('usercode') usercode: number) {
     return this.userService.deleteUser(usercode);

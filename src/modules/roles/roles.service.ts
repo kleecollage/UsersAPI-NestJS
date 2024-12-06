@@ -1,16 +1,24 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { PermissionDto } from 'src/modules/permissions/dto/permission-dto';
 import { PermissionsService } from 'src/modules/permissions/permissions.service';
 import { RoleDto } from 'src/modules/roles/dto/role-dto';
 import { Role } from 'src/modules/roles/schemas/role.schema';
+import { UsersService } from 'src/modules/users/users.service';
 
 @Injectable()
 export class RolesService {
   constructor(
     @InjectModel(Role.name) private roleModel: Model<Role>,
     private permissionService: PermissionsService,
+    @Inject(forwardRef(() => UsersService))
+    private userService: UsersService,
   ) {}
   //** ---------------------------------------- FIND ROLE BY NAME ---------------------------------------- **//
   findRoleByName(name: string) {

@@ -1,4 +1,9 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  forwardRef,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { RolesService } from 'src/modules/roles/roles.service';
@@ -10,6 +15,7 @@ import { User } from 'src/modules/users/schemas/user.schema';
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    @Inject(forwardRef(() => RolesService))
     private roleService: RolesService,
   ) {}
   //** ---------------------------------------- FIND USER BY EMAIL ---------------------------------------- **//
@@ -31,6 +37,30 @@ export class UsersService {
         model: 'Permission',
       },
     });
+  }
+  //** ---------------------------------------- COUNT USERS WITH ROLE ---------------------------------------- **//
+  async usersWithRole(roleName: string) {
+    const usersWithRole = await this.userModel.aggregate([
+      {
+        $lookup: {
+          from: 'roles',
+          localField: 'role',
+          foreignField: '_id',
+          as: 'roles',
+        },
+      },
+      {
+        $match: {
+          'roles.name': roleName.trim().toUpperCase(),
+        },
+      },
+      {
+        $count: 'count',
+      },
+    ]);
+
+    if (usersWithRole.length > 0) return usersWithRole[0].count;
+    else return 0;
   }
   //** ---------------------------------------- CREATE USER ---------------------------------------- **//
   async createUser(user: UserDto) {
@@ -203,6 +233,22 @@ export class UsersService {
         );
       } else {
         await userExists.updateOne({ deleted: true });
+
+        return this.findUserByUsercode(usercode);
+      }
+    } else
+      throw new ConflictException(`User with usercode ${usercode} not exists`);
+  }
+  //** ---------------------------------------- RESTORE USER ---------------------------------------- **//
+  async restoreUser(usercode: number) {
+    const userExists = await this.findUserByUsercode(usercode);
+    if (userExists) {
+      if (!userExists.deleted) {
+        throw new ConflictException(
+          `User with usercode ${usercode} is not deleted`,
+        );
+      } else {
+        await userExists.updateOne({ deleted: false });
 
         return this.findUserByUsercode(usercode);
       }
