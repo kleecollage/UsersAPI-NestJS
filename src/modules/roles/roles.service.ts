@@ -159,7 +159,15 @@ export class RolesService {
   //** ---------------------------------------- DELETE ROLE ---------------------------------------- **//
   async deleteRole(name: string) {
     const roleExists = await this.findRoleByName(name);
-    if (roleExists) return roleExists.deleteOne();
-    else throw new ConflictException('Role not exists');
+    if (roleExists) {
+      const countUsersWithRole = await this.userService.usersWithRole(name);
+      if (countUsersWithRole > 0) {
+        throw new ConflictException(
+          `Role: ${name} cannot be deleted. There are users assigned to it`,
+        );
+      }
+
+      return roleExists.deleteOne();
+    } else throw new ConflictException('Role not exists');
   }
 }
