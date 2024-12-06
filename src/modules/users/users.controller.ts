@@ -42,7 +42,7 @@ export class UsersController {
     @Query('sortBy') sortBy: string,
     @Query('sort') sort: string,
   ) {
-    return this.userService.getUsersDeleted(page, size, sortBy, sort);
+    return this.userService.getUsers(page, size, sortBy, sort, true);
   }
 
   @Get('/active')
@@ -52,7 +52,7 @@ export class UsersController {
     @Query('sortBy') sortBy: string,
     @Query('sort') sort: string,
   ) {
-    return this.userService.getUsersActive(page, size, sortBy, sort);
+    return this.userService.getUsers(page, size, sortBy, sort, false);
   }
 
   @Put('/:usercode')

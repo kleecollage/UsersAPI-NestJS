@@ -61,70 +61,25 @@ export class UsersService {
 
     return this.findUserByEmail(user.email);
   }
-  //** ---------------------------------------- GET DELETED USERS ---------------------------------------- **//
-  async getUsers(page: number, size: number, sortBy: string, sort: string) {
-    const skip = (page - 1) * size;
-    const total = await this.userModel.countDocuments();
-    const totalPages = Math.ceil(total / size);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1 && page <= totalPages;
-    const nextPage = hasNextPage ? page + 1 : null;
-    const pevPage = hasPrevPage ? page - 1 : null;
-    const sortOptions = {};
-
-    if (sortBy && sort) {
-      switch (sort.toUpperCase()) {
-        case 'ASC':
-          sortOptions[sortBy] = 1;
-          break;
-        case 'DESC':
-          sortOptions[sortBy] = -1;
-          break;
-      }
-    } else if (sortBy) {
-      sortOptions[sortBy] = 1;
-    }
-
-    const users: User[] = await this.userModel
-      .find()
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(size)
-      .populate({
-        path: 'role',
-        populate: {
-          path: 'permissions',
-          model: 'Permission',
-        },
-      });
-
-    return {
-      content: users,
-      page,
-      size,
-      total,
-      totalPages,
-      hasNextPage,
-      hasPrevPage,
-      nextPage,
-      pevPage,
-    };
-  }
-  //** ---------------------------------------- GET ACTIVE USERS ---------------------------------------- **//
-  async getUsersActive(
+  //** ---------------------------------------- GET USERS ---------------------------------------- **//
+  async getUsers(
     page: number,
     size: number,
     sortBy: string,
     sort: string,
+    deleted?: boolean,
   ) {
-    const total = await this.userModel.countDocuments({ deleted: false });
+    const findOptions = {};
+    if (deleted != undefined) findOptions['deleted'] = deleted;
+
+    const total = await this.userModel.countDocuments(findOptions);
     const totalPages = Math.ceil(total / size);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1 && page <= totalPages;
     const nextPage = hasNextPage ? page + 1 : null;
     const pevPage = hasPrevPage ? page - 1 : null;
-    const skip = (page - 1) * size;
     const sortOptions = {};
+    const skip = (page - 1) * size;
 
     if (sortBy && sort) {
       switch (sort.toUpperCase()) {
@@ -140,61 +95,7 @@ export class UsersService {
     }
 
     const users: User[] = await this.userModel
-      .find({ deleted: false })
-      .sort(sortOptions)
-      .skip(skip)
-      .limit(size)
-      .populate({
-        path: 'role',
-        populate: {
-          path: 'permissions',
-          model: 'Permission',
-        },
-      });
-
-    return {
-      content: users,
-      page,
-      size,
-      total,
-      totalPages,
-      hasNextPage,
-      hasPrevPage,
-      nextPage,
-      pevPage,
-    };
-  }
-  //** ---------------------------------------- GET DELETED USERS ---------------------------------------- **//
-  async getUsersDeleted(
-    page: number,
-    size: number,
-    sortBy: string,
-    sort: string,
-  ) {
-    const total = await this.userModel.countDocuments({ deleted: true });
-    const totalPages = Math.ceil(total / size);
-    const hasNextPage = page < totalPages;
-    const hasPrevPage = page > 1 && page <= totalPages;
-    const nextPage = hasNextPage ? page + 1 : null;
-    const pevPage = hasPrevPage ? page - 1 : null;
-    const skip = (page - 1) * size;
-    const sortOptions = {};
-
-    if (sortBy && sort) {
-      switch (sort.toUpperCase()) {
-        case 'ASC':
-          sortOptions[sortBy] = 1;
-          break;
-        case 'DESC':
-          sortOptions[sortBy] = -1;
-          break;
-      }
-    } else if (sortBy) {
-      sortOptions[sortBy] = 1;
-    }
-
-    const users: User[] = await this.userModel
-      .find({ deleted: true })
+      .find(findOptions)
       .sort(sortOptions)
       .skip(skip)
       .limit(size)
